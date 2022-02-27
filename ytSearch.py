@@ -1,5 +1,12 @@
+import configparser
 from googleapiclient.discovery import build
 from pandas import *
+
+# read the api key from .env file
+configParser = configparser.RawConfigParser()
+configFilePath = '.env'
+configParser.read(configFilePath)
+API_KEY = configParser.get('My_Section', 'API_KEY')
 
 
 URL = 'https://www.googleapis.com/youtube/v3/search'
@@ -7,15 +14,15 @@ YOUTUBE_API_SERVICE_NAME = 'youtube'
 YOUTUBE_API_VERSION = 'v3'
 
 ## publish date, video title, url, channel, num of views, num of likes, num of dislikes
-titleList = []
+titleList = [] #
 urlList = []
-viewsList = []
-publishTimeList = []
+viewsList = [] #
+publishTimeList = [] #
 tagsList = []
-videoIdList = []
-likesList = []
-commentsCountList = []
-
+videoIdList = [] #
+likesList = [] #
+commentsCountList = [] #
+channelName = []
 # def menu():
 # 	print("Hi ...")
 # 	region_code = input("Enter the region code: ")
@@ -30,10 +37,10 @@ def searchDetails():
 
 	requestSearch = youtube.search().list(
 			part='snippet',
-			q="japan",
+			q="pubg",
 			type='video',
-			maxResults=100,
-			regionCode = "jp"
+			maxResults=5,
+			regionCode = "jo"
 		)
 
 	searchResult = requestSearch.execute()
@@ -41,26 +48,21 @@ def searchDetails():
 	# print(searchResult["items"][0]["id"]["videoId"])
 
 	for video in searchResult['items']:
+		
 		titleList.append(video["snippet"]["title"])
 		urlList.append("https://www.youtube.com/watch?v=" + video["id"]["videoId"])
-
 		publishTimeList.append(video["snippet"]["publishedAt"])
+		channelName.append(video["snippet"]["channelTitle"])
+		tagsList.append(video["snippet"]["tags"])
+		
+		print(video["snippet"]["channelTitle"])
 		print(video["snippet"]["title"])
 		print("https://www.youtube.com/watch?v=" + video["id"]["videoId"])
 		videoDetails(video["id"]["videoId"])
-	# dict = {
-	# 	"published Date": publishTimeList,
-	# 	"titles": titleList,
-	# 	"url": urlList,
-	# }
-	# df = DataFrame(dict)
+		
 
-	# print(df)
-	# print(titleList)
-	# print(urlList)
 
-	# print(result['items'][0]["id"]["videoId"])
-
+	toDf()
 
 def videoDetails(ID):
 	youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
@@ -73,11 +75,39 @@ def videoDetails(ID):
 	response = videoInfoRequest.execute()
 	print(response["items"][0]["statistics"]["viewCount"])
 	print()
-	viewsList.append(response["items"][0]["statistics"]["viewCount"])
-	likesList.append(response["items"][0]["statistics"]["likeCount"])
-	commentsCountList.append(response["items"][0]["statistics"]["commentCount"])
-		# break
+	try:
+		viewsList.append(response["items"][0]["statistics"]["viewCount"])
+	except:
+		viewsList.append("ERROR")
+		
+	try:
+		likesList.append(response["items"][0]["statistics"]["likeCount"])
+	except:
+		likesList.append("ERROR")
 
+	try:
+		commentsCountList.append(response["items"][0]["statistics"]["commentCount"])
+	except:
+		commentsCountList.append("ERROR")
+	
+
+def toDf():
+
+	dict = {
+		"Title" : titleList,
+		"Views" : viewsList,
+		"Channel" : channelName,
+		"Publish Time" : publishTimeList,
+		"Likes" : likesList,
+		"Comments" : commentsCountList,
+		"Tags" : tagsList,
+		"URL" : urlList
+	}
+	df = DataFrame(dict)
+	# df = DataFrame(list(zip(titleList, viewsList, channelName, publishTimeList, likesList,commentsCountList,tagsList, urlList )),
+ #               columns =['Title', 'Views', 'Channel', 'Publish Time', 'Likes', 'Comments' ,'Tags', 'URL'])
+
+	print(df)
 if __name__ == '__main__':
 	searchDetails()
 
